@@ -1,0 +1,248 @@
+import java.awt.*;
+ import java.util.HashMap;
+ import javax.swing.*;
+ class Customer
+ {String name;
+ int meterNumber;
+ String contactNumber;
+ String address;
+ double previousReading;
+ double currentReading;
+ boolean paymentComplete;
+ public Customer(String name, int meterNumber, String contactNumber,
+ String address) {
+ this.name = name;
+ this.meterNumber = meterNumber;
+ this.contactNumber = contactNumber;
+ this.address = address;
+ this.previousReading = 0;
+ this.currentReading = 0;
+ this.paymentComplete = false;
+ }
+ public double getConsumedUnits() {
+return currentReading >= previousReading ? currentReading
+previousReading : currentReading;
+ }
+ public void updateMeterReading(double newReading)
+ {this.previousReading = this.currentReading;
+ this.currentReading = newReading;
+ }
+ public double calculateBill() {
+ double consumedUnits = getConsumedUnits();
+ double ratePerUnit;
+ if (consumedUnits <= 100)
+ {ratePerUnit = 10;
+ } else if (consumedUnits <= 500)
+ {ratePerUnit = 50;
+ } else {
+ ratePerUnit = 100;
+ }
+ return consumedUnits* ratePerUnit;
+ }
+ public void markPaymentComplete()
+ {this.paymentComplete = true;
+ }
+ public boolean isPaymentComplete() {
+return this.paymentComplete;
+ }
+ }
+ class TNEBBillingGUI extends JFrame {
+ private HashMap<Integer, Customer>customers;
+ private JTextArea outputArea;
+ public TNEBBillingGUI()
+ { customers =newHashMap<>();
+ setTitle(""
+ ” TNEBElectricity Billing System " ”");
+ setSize(800, 600);
+ setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+ setLayout(new BorderLayout());
+ setLocationRelativeTo(null); // Center the window
+ setResizable(false);
+ JPanel buttonPanel = new JPanel(new GridLayout(5, 1, 10, 10));
+ buttonPanel.setBackground(new Color(34, 45, 65));
+ outputArea =newJTextArea();
+ outputArea.setFont(new Font("Monospaced", Font.BOLD, 14));
+ outputArea.setEditable(false);
+ outputArea.setBackground(new Color(245, 245, 245));
+ JScrollPane scrollPane = new JScrollPane(outputArea);
+ JButton addCustomerButton = createStyledButton("+ Add Consumer",
+newColor(72, 201, 176));
+ JButton updateReadingButton = createStyledButton("✏ Update
+ Reading", new Color(241, 196, 15));
+ JButton generateBillButton = createStyledButton(")Generate Bill",
+ new Color(231, 76, 60));
+ JButton markPaymentButton = createStyledButton("—-.
+ —MarkPayment",
+ new Color(46, 204, 113));
+ JButton exitButton = createStyledButton("+ Exit", new Color(46, 134,
+ 222));
+ buttonPanel.add(addCustomerButton);
+ buttonPanel.add(updateReadingButton);
+ buttonPanel.add(generateBillButton);
+ buttonPanel.add(markPaymentButton);
+ buttonPanel.add(exitButton);
+ addCustomerButton.addActionListener(e-> addCustomer());
+ updateReadingButton.addActionListener(e-> updateMeterReading());
+ generateBillButton.addActionListener(e-> generateBill());
+ markPaymentButton.addActionListener(e-> markPaymentComplete());
+ exitButton.addActionListener(e-> System.exit(0));
+ JLabel title = new JLabel(""
+ ” TNEBElectricity Billing System " ”",
+ JLabel.CENTER);
+ title.setFont(new Font("Serif", Font.BOLD, 24));
+ title.setOpaque(true);
+ title.setBackground(new Color(123, 36, 28));
+ title.setForeground(Color.WHITE);
+title.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+ add(title, BorderLayout.NORTH);
+ add(buttonPanel, BorderLayout.WEST);
+ add(scrollPane, BorderLayout.CENTER);
+ }
+ private JButton createStyledButton(String text, Color backgroundColor)
+ {JButton button = new JButton(text);
+ button.setFont(new Font("SansSerif", Font.BOLD, 16));
+ button.setForeground(Color.WHITE);
+ button.setBackground(backgroundColor);
+ button.setFocusPainted(false);
+ button.setBorder(BorderFactory.createCompoundBorder(
+ BorderFactory.createLineBorder(Color.DARK_GRAY, 2),
+ BorderFactory.createEmptyBorder(5, 15, 5, 15)
+ ));
+ button.setRolloverEnabled(true);
+ button.addMouseListener(new java.awt.event.MouseAdapter()
+ {public void mouseEntered(java.awt.event.MouseEvent evt)
+ {button.setBackground(button.getBackground().darker());
+ }
+ public void mouseExited(java.awt.event.MouseEvent evt)
+ {button.setBackground(backgroundColor);
+ }
+ });
+ return button;
+ }
+private void addCustomer() {
+ String name =JOptionPane.showInputDialog(this, "Enter Consumer
+ Name:");
+ if (name == null | name.isEmpty())
+ { showMessage("+ Name cannot be
+ empty!");return;
+ }
+ String meterInput = JOptionPane.showInputDialog(this, "Enter Meter
+ Number:");
+ try {
+ int meterNumber =Integer.parseInt(meterInput);
+ if (customers.containsKey(meterNumber)) {
+ showMessage("+ Meter number already exists!");
+ return;
+ }
+ String contactNumber = JOptionPane.showInputDialog(this, "Enter
+ Contact Number:");
+ if (contactNumber == null | !contactNumber.matches("\\d{10}"))
+ { showMessage("+ Contact number must be exactly 10
+ digits!");return;
+ }
+ String address = JOptionPane.showInputDialog(this, "Enter
+ Address:");
+ if (address == null | address.isEmpty()) {
+showMessage("+ Address cannot be empty!");
+ return;
+ }
+ customers.put(meterNumber, new Customer(name, meterNumber,
+ contactNumber, address));
+ showMessage("⬛Consumeraddedsuccessfully:\nName:"+name
+ +"\nMeter Number:" + meterNumber);
+ } catch (NumberFormatException e)
+ { showMessage("+ Invalid meter number!");
+ }
+ }
+ private void updateMeterReading() {
+ String meterInput = JOptionPane.showInputDialog(this, "Enter Meter
+ Number:");
+ try {
+ int meterNumber =Integer.parseInt(meterInput);
+ if (!customers.containsKey(meterNumber)) {
+ showMessage("+ Consumer not found!");
+ return;
+ }
+ String readingInput = JOptionPane.showInputDialog(this, "Enter
+ NewMeter Reading:");
+ double newReading = Double.parseDouble(readingInput);
+ Customer customer = customers.get(meterNumber);
+ if (newReading < customer.previousReading) {
+showMessage("+ New reading cannot be less than the previousreturn;
+ reading!");
+ }
+ customer.updateMeterReading(newReading);
+ showMessage("⬛Meterreadingupdatedformeternumber:"+
+ meterNumber);
+ } catch (NumberFormatException e)
+ {showMessage("+ Invalid
+ input!");
+ }
+ }
+ private void generateBill() {
+ String meterInput = JOptionPane.showInputDialog(this, "Enter Meter
+ Number:");
+ try {
+ int meterNumber =Integer.parseInt(meterInput);
+ if (!customers.containsKey(meterNumber)) {
+ showMessage("+ Consumer not found!");
+ return;
+ }
+ Customer customer = customers.get(meterNumber);
+ double consumedUnits= customer.getConsumedUnits();
+ double totalBill = customer.calculateBill();
+ String formattedBill = String.format("%.2f", totalBill);
+outputArea.append("\n"
+ ”TNEBElectricity Bill "
+ ”\n");
+ outputArea.append("Consumer Name: " + customer.name + "\n");
+ outputArea.append("Meter Number: " + customer.meterNumber+
+ "\n");
+ "\n");
+ outputArea.append("Contact Number: " + customer.contactNumber +
+ outputArea.append("Address: " + customer.address + "\n");
+ outputArea.append("Previous Reading: " +
+ customer.previousReading + " kWh\n");
+ outputArea.append("Current Reading: " + customer.currentReading +
+ " kWh\n");
+ kWh\n");
+ outputArea.append("Consumed Units: " +consumedUnits + "
+ outputArea.append("Total Bill: ₹" + formattedBill + "\n");
+ outputArea.append("Payment Status: " +
+ (customer.isPaymentComplete() ? "⬛Paid" : "+ Pending")
+ +"\n"); outputArea.append("---------------- \n");
+ } catch (NumberFormatException e)
+ {showMessage("+ Invalid
+ input!");
+ }
+ }
+ private void markPaymentComplete() {
+ String meterInput = JOptionPane.showInputDialog(this, "Enter Meter
+ Number:");
+ try {
+ int meterNumber =Integer.parseInt(meterInput);
+ if (!customers.containsKey(meterNumber)) {
+showMessage("+ Consumer not found!");
+ return;
+ }
+ Customercustomer =customers.get(meterNumber);
+ customer.markPaymentComplete();
+ showMessage("⬛Paymentmarkedascompleteformeternumber:"
+ +meterNumber);
+ } catch (NumberFormatException e)
+ {showMessage("+ Invalid
+ input!");
+ }
+ }
+ private void showMessage(String message)
+ { JOptionPane.showMessageDialog(this, message);
+ }
+ }
+ public class TNEB {
+ public static void main(String[] args)
+ {SwingUtilities.invokeLater(()-> {
+ TNEBBillingGUIgui=newTNEBBillingGUI();
+ gui.setVisible(true);
+ });
+ }
+ }
